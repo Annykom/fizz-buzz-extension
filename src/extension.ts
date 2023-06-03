@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import type {FuncNames, DocInfo} from './types'
 
 const REGEX = /(?<=def\s)[\w]+/g;
 
@@ -23,11 +24,14 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			return;
 		}
 
-		if (this.getFuncsNumber(document, range) % 15 === 0) {
+		let docInfo = this.getDocInfo(document, range)
+		let nameGroups = this.nameRepeats(docInfo.funcNames);
+
+		if (docInfo.funcsNumber % 15 === 0) {
 			let newName = 'fizz_buzz'
 			let counter = 1;
 			// проверка, подходит ли новое имя для замены
-			while (this.nameRepeats(document, range)[2].includes(newName)) {
+			while (nameGroups.fizz_buzz.includes(newName)) {
 				newName = 'fizz_buzz_' + counter;
 				counter++
 			}
@@ -40,11 +44,11 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			];
 		}
 
-		if (this.getFuncsNumber(document, range) % 5 === 0) {
+		if (docInfo.funcsNumber % 5 === 0) {
 			let newName = 'buzz'
 			let counter = 1;
 			// проверка, подходит ли новое имя для замены
-			while (this.nameRepeats(document, range)[1].includes(newName)) {
+			while (nameGroups.buzz.includes(newName)) {
 				newName = 'buzz_' + counter;
 				counter++
 			}
@@ -57,11 +61,11 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			];
 		}
 
-		if (this.getFuncsNumber(document, range) % 3 === 0) {
+		if (docInfo.funcsNumber % 3 === 0) {
 			let newName = 'fizz'
 			let counter = 1;
 			// проверка, подходит ли новое имя для замены
-			while (this.nameRepeats(document, range)[0].includes(newName)) {
+			while (nameGroups.fizz.includes(newName)) {
 				newName = 'fizz_' + counter;
 				counter++
 			}
@@ -84,13 +88,37 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		return line.text.match(REGEX) !== null
 	}
 
-	private nameRepeats(document: vscode.TextDocument, range: vscode.Range) {
-		const start = range.start;
-		const line = document.lineAt(start.line);
-		// здесь собран массив из наименований всех функций в документе
-		let funcNames = document.getText().match(REGEX)
-		// console.log(funcNames)
+	private getDocInfo(document: vscode.TextDocument, range: vscode.Range): DocInfo {
+		// let funcNames = document.getText().match(REGEX)
 
+		const start = range.start;
+
+		let index = 0;
+		let funcsNumber: number = 0;
+		let funcCounter = 0
+
+		let funcNames: string[];
+		for (index = 0; index < document.lineCount; index++) {
+			let currLine = document.lineAt(index)
+			
+			if (currLine.text.match(REGEX) !== null) {
+				funcNames!.push(currLine.text.match(REGEX)![0])
+				funcCounter++
+			}
+
+			if (index === start.line) {
+				funcsNumber = funcCounter
+			}
+		}
+
+		let result: DocInfo = {
+			funcsNumber: funcsNumber,
+			funcNames: funcNames!
+		}
+		return result;
+	}
+
+	private nameRepeats(funcNames: string[]) {
 		// подготовка массивов
 		let arr_fizz: string[] = [];
 		let arr_buzz: string[] = [];
@@ -113,27 +141,12 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			}		
 		}
 
-		let result = [arr_fizz, arr_buzz, arr_fizz_buzz]
-		return result
-	}
-
-	private getFuncsNumber(document: vscode.TextDocument, range: vscode.Range): number {
-		const start = range.start;
-
-		let index = 0;
-		let funcNum = 0;
-		for (index = 0; index <= start.line; index++) {
-			let currLine = document.lineAt(index)
-			if (currLine.text.match(REGEX) !== null) {
-				funcNum++
-			}
+		let result: FuncNames = {
+			fizz: arr_fizz,
+			buzz: arr_buzz,
+			fizz_buzz: arr_fizz_buzz
 		}
-
-		return funcNum;
-	}
-
-	private collisionResolver(document: vscode.TextDocument, range: vscode.Range) {
-		console.log('TEST', document.getText().match(REGEX))
+		return result
 	}
 
 	private findFullFuncNameRange(document: vscode.TextDocument, range: vscode.Range): vscode.Range {
