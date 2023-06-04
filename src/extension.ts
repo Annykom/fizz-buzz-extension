@@ -37,10 +37,10 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			}
 
 			let newRange = this.findFullFuncNameRange(document, range)
-			const replaceWithSmileyCatFix = this.createFix(document, newRange, newName);
+			const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
 
 			return [
-				replaceWithSmileyCatFix
+				replaceWithNewFuncNameFix
 			];
 		}
 
@@ -54,10 +54,10 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			}
 			
 			let newRange = this.findFullFuncNameRange(document, range)
-			const replaceWithSmileyCatFix = this.createFix(document, newRange, newName);
+			const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
 
 			return [
-				replaceWithSmileyCatFix
+				replaceWithNewFuncNameFix
 			];
 		}
 
@@ -71,10 +71,10 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			}
 
 			let newRange = this.findFullFuncNameRange(document, range)
-			const replaceWithSmileyCatFix = this.createFix(document, newRange, newName);
+			const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
 
 			return [
-				replaceWithSmileyCatFix
+				replaceWithNewFuncNameFix
 			];
 		}
 
