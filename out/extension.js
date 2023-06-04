@@ -17,11 +17,13 @@ class FizzBuzzer {
         if (!this.isFuncLine(document, range)) {
             return;
         }
-        if (this.getFuncsNumber(document, range) % 15 === 0) {
+        let docInfo = this.getDocInfo(document, range);
+        let nameGroups = this.nameRepeats(docInfo.funcNames);
+        if (docInfo.funcsNumber % 15 === 0) {
             let newName = 'fizz_buzz';
             let counter = 1;
             // проверка, подходит ли новое имя для замены
-            while (this.nameRepeats(document, range)[2].includes(newName)) {
+            while (nameGroups.fizz_buzz.includes(newName)) {
                 newName = 'fizz_buzz_' + counter;
                 counter++;
             }
@@ -31,11 +33,11 @@ class FizzBuzzer {
                 replaceWithSmileyCatFix
             ];
         }
-        if (this.getFuncsNumber(document, range) % 5 === 0) {
+        if (docInfo.funcsNumber % 5 === 0) {
             let newName = 'buzz';
             let counter = 1;
             // проверка, подходит ли новое имя для замены
-            while (this.nameRepeats(document, range)[1].includes(newName)) {
+            while (nameGroups.buzz.includes(newName)) {
                 newName = 'buzz_' + counter;
                 counter++;
             }
@@ -45,11 +47,11 @@ class FizzBuzzer {
                 replaceWithSmileyCatFix
             ];
         }
-        if (this.getFuncsNumber(document, range) % 3 === 0) {
+        if (docInfo.funcsNumber % 3 === 0) {
             let newName = 'fizz';
             let counter = 1;
             // проверка, подходит ли новое имя для замены
-            while (this.nameRepeats(document, range)[0].includes(newName)) {
+            while (nameGroups.fizz.includes(newName)) {
                 newName = 'fizz_' + counter;
                 counter++;
             }
@@ -66,12 +68,28 @@ class FizzBuzzer {
         const line = document.lineAt(start.line);
         return line.text.match(REGEX) !== null;
     }
-    nameRepeats(document, range) {
+    getDocInfo(document, range) {
         const start = range.start;
-        const line = document.lineAt(start.line);
-        // здесь собран массив из наименований всех функций в документе
-        let funcNames = document.getText().match(REGEX);
-        // console.log(funcNames)
+        let funcsNumber = 0;
+        let funcCounter = 0;
+        let funcNames = [];
+        for (let index = 0; index < document.lineCount; index++) {
+            let currLine = document.lineAt(index);
+            if (currLine.text.match(REGEX) !== null) {
+                funcNames.push(currLine.text.match(REGEX)[0]);
+                funcCounter++;
+            }
+            if (index === start.line) {
+                funcsNumber = funcCounter;
+            }
+        }
+        const result = {
+            funcsNumber: funcsNumber,
+            funcNames: funcNames
+        };
+        return result;
+    }
+    nameRepeats(funcNames) {
         // подготовка массивов
         let arr_fizz = [];
         let arr_buzz = [];
@@ -92,30 +110,19 @@ class FizzBuzzer {
                 arr_buzz.push(funcNames[index]);
             }
         }
-        let result = [arr_fizz, arr_buzz, arr_fizz_buzz];
+        const result = {
+            fizz: arr_fizz,
+            buzz: arr_buzz,
+            fizz_buzz: arr_fizz_buzz
+        };
         return result;
-    }
-    getFuncsNumber(document, range) {
-        const start = range.start;
-        let index = 0;
-        let funcNum = 0;
-        for (index = 0; index <= start.line; index++) {
-            let currLine = document.lineAt(index);
-            if (currLine.text.match(REGEX) !== null) {
-                funcNum++;
-            }
-        }
-        return funcNum;
-    }
-    collisionResolver(document, range) {
-        console.log('TEST', document.getText().match(REGEX));
     }
     findFullFuncNameRange(document, range) {
         const start = range.start;
         const line = document.lineAt(start.line);
-        let funcNameEnd = line.text.indexOf('(');
-        let funcNameBeg = line.text.indexOf('def ');
-        let funcRange = new vscode.Range(start.line, funcNameBeg + 4, start.line, funcNameEnd);
+        const funcNameEnd = line.text.indexOf('(');
+        const funcNameBeg = line.text.indexOf('def ');
+        const funcRange = new vscode.Range(start.line, funcNameBeg + 4, start.line, funcNameEnd);
         return funcRange;
     }
     createFix(document, range, newFuncName) {

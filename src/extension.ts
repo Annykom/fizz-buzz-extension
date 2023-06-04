@@ -89,29 +89,26 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 	}
 
 	private getDocInfo(document: vscode.TextDocument, range: vscode.Range): DocInfo {
-		// let funcNames = document.getText().match(REGEX)
-
 		const start = range.start;
 
-		let index = 0;
-		let funcsNumber: number = 0;
-		let funcCounter = 0
+		let funcsNumber = 0;
+		let funcCounter = 0;
 
-		let funcNames: string[];
-		for (index = 0; index < document.lineCount; index++) {
+		let funcNames: string[] = [];
+		for (let index = 0; index < document.lineCount; index++) {
 			let currLine = document.lineAt(index)
 			
 			if (currLine.text.match(REGEX) !== null) {
-				funcNames!.push(currLine.text.match(REGEX)![0])
+				funcNames!.push(currLine.text.match(REGEX)![0]);
 				funcCounter++
 			}
 
 			if (index === start.line) {
-				funcsNumber = funcCounter
+				funcsNumber = funcCounter;
 			}
 		}
 
-		let result: DocInfo = {
+		const result: DocInfo = {
 			funcsNumber: funcsNumber,
 			funcNames: funcNames!
 		}
@@ -128,20 +125,20 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		for (let index = 0; index < funcNames!?.length; index++) {
 			// сбор массива с именами, содержащими в себе fizz_buzz
 			if (funcNames![index].includes('fizz_buzz')) {
-				arr_fizz_buzz.push(funcNames![index])
-				continue
+				arr_fizz_buzz.push(funcNames![index]);
+				continue;
 			}	
 			// сбор массива с именами, содержащими в себе fizz
 			if (funcNames![index].includes('fizz')) {
-				arr_fizz.push(funcNames![index])
+				arr_fizz.push(funcNames![index]);
 			}
 			// сбор массива с именами, содержащими в себе buzz
 			if (funcNames![index].includes('buzz')) {
-				arr_buzz.push(funcNames![index])
-			}		
+				arr_buzz.push(funcNames![index]);
+			}	
 		}
 
-		let result: FuncNames = {
+		const result: FuncNames = {
 			fizz: arr_fizz,
 			buzz: arr_buzz,
 			fizz_buzz: arr_fizz_buzz
@@ -152,10 +149,10 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 	private findFullFuncNameRange(document: vscode.TextDocument, range: vscode.Range): vscode.Range {
 		const start = range.start;
 		const line = document.lineAt(start.line);
-		let funcNameEnd = line.text.indexOf('(')
-		let funcNameBeg = line.text.indexOf('def ')
+		const funcNameEnd = line.text.indexOf('(')
+		const funcNameBeg = line.text.indexOf('def ')
 		
-		let funcRange = new vscode.Range(start.line, funcNameBeg + 4, start.line, funcNameEnd)
+		const funcRange = new vscode.Range(start.line, funcNameBeg + 4, start.line, funcNameEnd)
 		return funcRange
 	}
 

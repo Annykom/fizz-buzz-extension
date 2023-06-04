@@ -1,19 +1,12 @@
-# Code Action Provider Sample
+# FizzBuzz extension
 
-This sample shows how to provide code actions in the editor. Code actions are used to implement quick fixes and [refactoring](https://code.visualstudio.com/docs/editor/refactoring) in VS Code.
+This extension allows to rename functions based on their sequence number in Python files. Code actions are used to implement quick fixes in VS Code.
 
-The sample uses the [`CodeActionProvider`](https://code.visualstudio.com/api/references/vscode-api#CodeActionProvider) api to implement a simple set of code actions that convert `:)` to a smiley emoji in markdown files:
+The extension uses the [`CodeActionProvider`](https://code.visualstudio.com/api/references/vscode-api#CodeActionProvider) api to implement code actions that convert function name:
+- to 'fizz' if its sequence number multiple 3, 
+- to 'buzz' if its sequence number multiple 5,
+- to 'fizz_buzz' if its sequence number multiple both 3 and 5.
 
-![Emoji code actions](example.gif)
+![FizzBuzz code actions](fizzbuzzer.gif)
 
-Second example of code action provider shows how to associate code actions with diagnostic (e.g. compilation) problems.
-
-![Diagnostic code actions](example_diagnostic.gif)
-
-## VS Code API
-
-### `vscode` module
-
-- [`languages.registerCodeActionsProvider`](https://code.visualstudio.com/api/references/vscode-api#languages.registerCodeActionsProvider)
-- [`Diagnostic.code`](https://code.visualstudio.com/api/references/vscode-api#Diagnostic)
-- [`CodeActionContext.diagnostics`](https://code.visualstudio.com/api/references/vscode-api#CodeActionContext)
+In case of collisions, a numeric suffix is added to the function name.
