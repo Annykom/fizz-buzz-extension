@@ -1,7 +1,17 @@
 import * as vscode from 'vscode';
-import type {FuncNames, DocInfo} from './types'
+import type {DocInfo, Task} from './types'
 
 const REGEX = /(?<=def\s)[\w]+/g;
+const TASK: Task[] = [
+	{
+		divider: 3,
+		funcName: 'fizz'
+	},
+	{
+		divider: 5,
+		funcName: 'buzz'
+	}
+];
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
@@ -25,60 +35,37 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		}
 
 		let docInfo = this.getDocInfo(document, range)
-		let nameGroups = this.nameRepeats(docInfo.funcNames);
 
-		if (docInfo.funcsNumber % 15 === 0) {
-			let newName = 'fizz_buzz'
-			let counter = 1;
-			// проверка, подходит ли новое имя для замены
-			while (nameGroups.fizz_buzz.includes(newName)) {
-				newName = 'fizz_buzz_' + counter;
-				counter++
+		let suitableNames: string[] = [];
+		TASK.sort((a, b) => {
+			if (a.divider > b.divider) {
+				return 1
 			}
+			if (a.divider < b.divider) {
+				return -1
+			}
+			return 0;
+		})
 
-			let newRange = this.findFullFuncNameRange(document, range)
-			const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
+		TASK.forEach(element => {
+			if (docInfo.funcsNumber % element.divider === 0) {
+				suitableNames.push(element.funcName);
+			}
+		});
 
-			return [
-				replaceWithNewFuncNameFix
-			];
+		if (suitableNames.length === 0) {
+			return;
 		}
 
-		if (docInfo.funcsNumber % 5 === 0) {
-			let newName = 'buzz'
-			let counter = 1;
-			// проверка, подходит ли новое имя для замены
-			while (nameGroups.buzz.includes(newName)) {
-				newName = 'buzz_' + counter;
-				counter++
-			}
-			
-			let newRange = this.findFullFuncNameRange(document, range)
-			const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
+		let suitableName: string = suitableNames.join('_');
+		let newName = this.getNewFuncName(docInfo.funcNames, suitableName);
 
-			return [
-				replaceWithNewFuncNameFix
-			];
-		}
+		let newRange = this.findFullFuncNameRange(document, range)
+		const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
 
-		if (docInfo.funcsNumber % 3 === 0) {
-			let newName = 'fizz'
-			let counter = 1;
-			// проверка, подходит ли новое имя для замены
-			while (nameGroups.fizz.includes(newName)) {
-				newName = 'fizz_' + counter;
-				counter++
-			}
-
-			let newRange = this.findFullFuncNameRange(document, range)
-			const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
-
-			return [
-				replaceWithNewFuncNameFix
-			];
-		}
-
-		return;		
+		return [
+			replaceWithNewFuncNameFix
+		];	
 	}
 
 	private isFuncLine(document: vscode.TextDocument, range: vscode.Range): boolean {
@@ -115,35 +102,26 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		return result;
 	}
 
-	private nameRepeats(funcNames: string[]) {
-		// подготовка массивов
-		let arr_fizz: string[] = [];
-		let arr_buzz: string[] = [];
-		let arr_fizz_buzz: string[] = [];
+	private getNewFuncName(allDocFuncNames: string[], suitableName: string): string {
+		let result = new Set<string>;
 
-		// проход по массиву наименований функций 
-		for (let index = 0; index < funcNames!?.length; index++) {
-			// сбор массива с именами, содержащими в себе fizz_buzz
-			if (funcNames![index].includes('fizz_buzz')) {
-				arr_fizz_buzz.push(funcNames![index]);
-				continue;
-			}	
-			// сбор массива с именами, содержащими в себе fizz
-			if (funcNames![index].includes('fizz')) {
-				arr_fizz.push(funcNames![index]);
-			}
-			// сбор массива с именами, содержащими в себе buzz
-			if (funcNames![index].includes('buzz')) {
-				arr_buzz.push(funcNames![index]);
-			}	
-		}
+		const suitableRegEx = new RegExp(`(^${suitableName}$|^${suitableName}_\\d+$)`, 'g');
 
-		const result: FuncNames = {
-			fizz: arr_fizz,
-			buzz: arr_buzz,
-			fizz_buzz: arr_fizz_buzz
+		allDocFuncNames.forEach(element => {
+			if (element.match(suitableRegEx) !== null) {
+				result.add(element);
+			}	
+		});
+
+		let counter = 1;
+		let newName = suitableName;
+
+		while (result.has(newName)) {
+			newName = suitableName + '_' + counter;
+			counter++
 		}
-		return result
+		console.log('newName:', newName)
+		return newName;
 	}
 
 	private findFullFuncNameRange(document: vscode.TextDocument, range: vscode.Range): vscode.Range {
