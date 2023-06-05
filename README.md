@@ -8,12 +8,12 @@ The default settings are:
 - 'buzz' if function sequence number is multiple 5,
 - 'fizz_buzz' if function sequence number is multiple both 3 and 5.
 
-![FizzBuzz code actions](fizzbuzzer.gif)
+![FizzBuzz code actions](https://github.com/Annykom/fizz-buzz-extension/blob/8874e0b01878359d73974b2d7c683ad61c4eb000/fizzbuzzer.gif?raw=true)
 
 In case of collisions, a numeric suffix is added to the function name.
 
-![FizzBuzz collisions](fizzbuzzer_collisions.gif)
+![FizzBuzz collisions](https://github.com/Annykom/fizz-buzz-extension/blob/8874e0b01878359d73974b2d7c683ad61c4eb000/fizzbuzzer_collisions.gif?raw=true)
 
 Setting of user parameters is available in the extension settings.
 
-![FizzBuzz settings](fizzbuzzer_settings.gif)
+![FizzBuzz settings](https://github.com/Annykom/fizz-buzz-extension/blob/8874e0b01878359d73974b2d7c683ad61c4eb000/fizzbuzzer_settings.gif?raw=true)
