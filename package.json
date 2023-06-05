@@ -2,6 +2,7 @@
 	"name": "fizz-buzz-extension",
 	"private": true,
 	"displayName": "FizzBuzz Extension",
+	"icon": "fizzbuzzer.png",
 	"version": "1.0.0",
 	"publisher": "Annykom",
 	"homepage": "https://github.com/Annykom/fizz-buzz-extension/blob/master/README.md",
