@@ -1,17 +1,8 @@
 import * as vscode from 'vscode';
-import type {DocInfo, Task} from './types'
+import type {DocInfo, Task, ISettings} from './types'
 
-const REGEX = /(?<=def\s)[\w]+/g;
-const TASK: Task[] = [
-	{
-		divider: 3,
-		funcName: 'fizz'
-	},
-	{
-		divider: 5,
-		funcName: 'buzz'
-	}
-];
+const FUNCTION_REGEX = /(?<=def\s)[\w]+/g;
+const SETTINGS_REGEX = /^\d+\s*\|\s*\w+$/g;
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
@@ -20,8 +11,9 @@ export function activate(context: vscode.ExtensionContext) {
 		}));
 }
 
-/**
- * Provides code actions for converting function names to 'fizz' or 'buzz' or 'fizz_buzz'.
+/** 
+ * Позволяет выполнить quick fix action в Python коде с предложением переименовать функцию 
+ * в зависимости от её порядкового номера в файле и от заданных настроек.
  */
 export class FizzBuzzer implements vscode.CodeActionProvider {
 
@@ -34,20 +26,11 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			return;
 		}
 
-		let docInfo = this.getDocInfo(document, range)
+		const task = this.getValidatedTask();
+		const docInfo = this.getDocInfo(document, range)
 
 		let suitableNames: string[] = [];
-		TASK.sort((a, b) => {
-			if (a.divider > b.divider) {
-				return 1
-			}
-			if (a.divider < b.divider) {
-				return -1
-			}
-			return 0;
-		})
-
-		TASK.forEach(element => {
+		task.forEach(element => {
 			if (docInfo.funcsNumber % element.divider === 0) {
 				suitableNames.push(element.funcName);
 			}
@@ -57,10 +40,10 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 			return;
 		}
 
-		let suitableName: string = suitableNames.join('_');
-		let newName = this.getNewFuncName(docInfo.funcNames, suitableName);
+		const suitableName: string = suitableNames.join('_');
+		const newName = this.getCorrectFuncName(docInfo.funcNames, suitableName);
 
-		let newRange = this.findFullFuncNameRange(document, range)
+		const newRange = this.findFullFuncNameRange(document, range)
 		const replaceWithNewFuncNameFix = this.createFix(document, newRange, newName);
 
 		return [
@@ -68,13 +51,78 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		];	
 	}
 
+	/** 
+	 * Проверяет, содержит ли текущая строка объявление функции.
+	 * 
+	 * @param document документ, в котором была вызвана команда
+	 * @param range диапазон, для которого была вызвана команда
+	 * 
+	 * @return `true`, если текущая строка содержит объявление функции
+	 */
 	private isFuncLine(document: vscode.TextDocument, range: vscode.Range): boolean {
-		const start = range.start;
-		const line = document.lineAt(start.line);
+		const currLineNumber = range.start.line;
+		const line = document.lineAt(currLineNumber);
 
-		return line.text.match(REGEX) !== null
+		return line.text.match(FUNCTION_REGEX) !== null
 	}
 
+	/** 
+	 * Проверяет введенные в настройках параметры, исправляет при наличии ошибок и возвращает 
+	 * дефолтные значения, если все параметры введены некорректно.
+	 * 
+	 * @return перечень делителей и соответствующих им имен функций
+	 */
+	private getValidatedTask(): Task[] {
+		const settings = vscode.workspace.getConfiguration().get<ISettings>('fizzbuzz');
+		
+		const task: Task[] = [];
+		settings!.transforms.forEach(element => {
+			element = element.trim();
+			if (element.match(SETTINGS_REGEX) === null) {
+				vscode.window.showErrorMessage(`The setting element '${element}' is not valid.`);
+			} else {
+				let splittedElement = element.split('|')
+				let divider = +splittedElement[0]
+				let funcName = splittedElement[1].trim()
+				task.push({divider, funcName})
+			}
+		});
+
+		task.sort((a, b) => {
+			if (a.divider > b.divider) {
+				return 1
+			}
+			if (a.divider < b.divider) {
+				return -1
+			}
+			return 0;
+		})
+
+		if (task.length === 0) {
+			return [
+				{
+					divider: 3,
+					funcName: 'fizz'
+				},
+				{
+					divider: 5,
+					funcName: 'buzz'
+				}
+			];
+		}
+
+		return task;
+	}
+
+	/** 
+	 * Возвращает информацию о документе: перечень всех имен функций из документа и
+	 * порядковый номер функции на текущей строке.
+	 * 
+	 * @param document документ, в котором была вызвана команда
+	 * @param range диапазон, для которого была вызвана команда
+	 * 
+	 * @return перечень имен функций; порядковый номер функции
+	 */
 	private getDocInfo(document: vscode.TextDocument, range: vscode.Range): DocInfo {
 		const start = range.start;
 
@@ -85,8 +133,8 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		for (let index = 0; index < document.lineCount; index++) {
 			let currLine = document.lineAt(index)
 			
-			if (currLine.text.match(REGEX) !== null) {
-				funcNames!.push(currLine.text.match(REGEX)![0]);
+			if (currLine.text.match(FUNCTION_REGEX) !== null) {
+				funcNames!.push(currLine.text.match(FUNCTION_REGEX)![0]);
 				funcCounter++
 			}
 
@@ -102,7 +150,16 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		return result;
 	}
 
-	private getNewFuncName(allDocFuncNames: string[], suitableName: string): string {
+	/** 
+	 * Возвращает корректное имя функции с учетом возможных коллизий. В случае коллизии к имени
+	 * функции добавляется суффикс с числом.
+	 * 
+	 * @param allDocFuncNames перечень всех имен функций из документа
+	 * @param suitableName подходящее имя функции в зависимости от её порядкового номера
+	 * 
+	 * @return корректное имя функции
+	 */
+	private getCorrectFuncName(allDocFuncNames: string[], suitableName: string): string {
 		let result = new Set<string>;
 
 		const suitableRegEx = new RegExp(`(^${suitableName}$|^${suitableName}_\\d+$)`, 'g');
@@ -124,6 +181,14 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		return newName;
 	}
 
+	/** 
+	 * Возвращает диапазон, в котором находится имя функции, подлежащее замене.
+	 * 
+	 * @param document документ, в котором была вызвана команда
+	 * @param range диапазон, для которого была вызвана команда
+	 * 
+	 * @return диапазон для замены имени функции
+	 */
 	private findFullFuncNameRange(document: vscode.TextDocument, range: vscode.Range): vscode.Range {
 		const start = range.start;
 		const line = document.lineAt(start.line);
@@ -134,6 +199,15 @@ export class FizzBuzzer implements vscode.CodeActionProvider {
 		return funcRange
 	}
 
+	/** 
+	 * Создает quick fix action, которое может быть выполнено в коде, с предложением переименовать функцию.
+	 * 
+	 * @param document документ, в котором была вызвана команда
+	 * @param range диапазон, для которого была вызвана команда
+	 * @param newFuncName новое имя функции
+	 * 
+	 * @return quick fix action
+	 */
 	private createFix(document: vscode.TextDocument, range: vscode.Range, newFuncName: string): vscode.CodeAction {
 		const fix = new vscode.CodeAction(`Rename to ${newFuncName}`, vscode.CodeActionKind.QuickFix);
 		fix.edit = new vscode.WorkspaceEdit();

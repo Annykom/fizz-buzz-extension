@@ -4,6 +4,7 @@
 	"displayName": "FizzBuzz Extension",
 	"version": "0.0.1",
 	"publisher": "Annykom",
+	"homepage": "https://github.com/Annykom/fizz-buzz-extension/blob/master/README.md",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Annykom/fizz-buzz-extension"
@@ -17,6 +18,25 @@
 	"activationEvents": [
 		"onLanguage:python"
 	],
+	"contributes": {
+		"configuration": {
+			"title": "FizzBuzz",
+			"properties": {
+			  	"fizzbuzz.transforms": {
+					"type": "array",
+					"order": 1,
+					"description": "Set delimiters and function names to rename. Use an input mask: <delimiter>|<function name>",
+					"items": {
+						"type":"string"
+					},
+					"default": [
+						"3|fizz",
+						"5|buzz"
+					]
+				}
+			}
+		}
+	},
 	"main": "./out/extension.js",
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
