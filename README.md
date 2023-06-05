@@ -10,8 +10,10 @@ The default settings are:
 
 ![FizzBuzz code actions](fizzbuzzer.gif)
 
-In case of collisions, a numeric suffix is added to the function name:
+In case of collisions, a numeric suffix is added to the function name.
+
 ![FizzBuzz collisions](fizzbuzzer_collisions.gif)
 
-Setting of user parameters is available in the extension settings:
+Setting of user parameters is available in the extension settings.
+
 ![FizzBuzz settings](fizzbuzzer_settings.gif)
