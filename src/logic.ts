@@ -132,7 +132,6 @@ export class Logic {
 			newName = suitableName + '_' + counter;
 			counter++
 		}
-		console.log('newName:', newName)
 		return newName;
 	}
 
